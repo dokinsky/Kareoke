@@ -1,0 +1,357 @@
+<html>
+    <head>
+        <title></title>
+        <style>
+            body{margin: 0px;}
+            .slidecontainer{
+                width: 300px;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="position:absolute; top:10px; width: 500px;">
+            
+            <div class="slidecontainer">
+                <div>Launch Angle <input type="text" size="1" value="15" id="LaunchAngleText" readonly> degrees</div>
+                <input type="range" min="0" max="60" value="15" step="1" class="slider" id="LaunchAngle"  style="width:500px">
+            </div>
+            <div class="slidecontainer">
+                <div>Ball Speed <input type="text" size="1" id="BallSpeedText" value="141" readonly> mph</div>
+                <input type="range" min="10" max="210" value="141" class="slider" id="BallSpeed" step="1" style="width:500px">
+            </div>
+            <div class="slidecontainer">
+                <div>Ball Backspin <input type="text" size="1" id="BallSpinText" value="1000" readonly> rev</div>
+                <input type="range" min="0" max="20000" value="1000" class="slider" id="BallSpin" step="100"  style="width:500px">
+            </div>   
+            <div class="slidecontainer">
+                <div>Altitude <input type="text" size="1" id="AltitudeText" value="0" readonly> feet</div>
+                <input type="range" min="0" max="5000" value="0" class="slider" id="Altitude" step="100"  style="width:500px">
+            </div>  
+            <div class="slidecontainer">
+                <div>Elevation Difference <input type="text" size="1" id="ElevationDifferenceText" value="0" readonly> feet</div>
+                <input type="range" min="-150" max="150" value="0" class="slider" id="ElevationDifference" step="1"  style="width:500px">
+            </div>    
+            <!--
+            <div class="slidecontainer">
+                <div>Ball Mass <input type="text" size="1" id="BallMassText" value="50" readonly> g </div>
+                <input type="range" min="1" max="100" value="50" class="slider" id="BallMass" step="1"  style="width:500px">
+            </div>
+            <div class="slidecontainer">
+                <div>Ball Radius  <input type="text" size="1" id="BallRadiusText" value="43" readonly> mm</div>
+                <input type="range" min="1" max="100" value="43" class="slider" id="BallRadius" step="1"  style="width:500px">
+            </div>
+            <div class="slidecontainer">
+                <div>Drag Coefficient <input type="text" size="1" id="DragCoText" value="0.3" readonly></div>
+                <input type="range" min="0" max="1" value=".3" class="slider" id="DragCo" step="0.01"  style="width:500px">
+            </div>
+            <div class="slidecontainer">
+                <div>Spin Rate Coefficient <input type="text" size="1" id="SpinDragText" value="0.25" readonly></div>
+                <input type="range" min="0" max="1" value=".25" class="slider" id="SpinDrag" step="0.01"  style="width:500px">
+            </div>-->
+        </div>
+        <div style="position: absolute; top:10px; right: 10px;">
+            <label>Carry Distance</label>
+            <div id="CarryDistance"></div>
+            <label>Peak</label>
+            <div id="PeakHeight"></div>
+        </div>
+        
+        <canvas id="canvas"></canvas>
+    </body>
+</html>
+<script>
+    class Vector{
+        constructor(x, y){
+            this.x = x;
+            this.y = y;
+        }
+
+        add(v){
+            return new Vector(this.x + v.x, this.y + v.y);
+        }
+
+        scale(s){
+            return new Vector(this.x * s, this.y * s);
+        }
+        
+        length(){
+            return Math.sqrt(this.x * this.x + this.y * this.y);
+        }
+
+        clone(){
+            return new Vector(x, y);
+        }
+    }
+    function getAirDensity(altitude) {
+        // Constants
+        //Altitude in feet
+        const seaLevelTemperature = 288.15; // Kelvin
+        const seaLevelPressure = 101325; // Pascals
+        const lapseRate = 0.0065; // K/m (standard lapse rate)
+
+        // Calculate temperature at given altitude
+        const temperature = seaLevelTemperature - (lapseRate * altitude);
+
+        // Calculate pressure at given altitude using the barometric formula
+        const pressure = seaLevelPressure * Math.pow((1 - (lapseRate * altitude) / seaLevelTemperature), (9.81 / (287.05 * lapseRate)));
+
+        // Calculate air density using the ideal gas law
+        const airDensity = pressure / (287.05 * temperature); // 287.05 J/(kg·K) is the specific gas constant for dry air
+
+        return airDensity;
+    }
+
+    function calculateTrajectoryWithMagnus(initialVelocity, launchAngle, spinRate, airDensity, dragCo, coefficientLift, mass, radius,  timeStep, startElevation = 0, endElevation = 0) {
+        console.log(endElevation)
+        // Constants
+        spinRate = spinRate / 60;
+        let g = 9.81; // gravity (m/s^2)
+        let rho = airDensity; // Air density (kg/m^3)
+        let C = dragCo;// 0.10; //Drag coefficient 
+        //let Cl = coefficientLift;// 0.25; //Coefficient of lift
+        let m = mass;// 0.0459; // Mass of a standard golf ball (kg)
+        let R = radius;// 0.023; // Radius of a standard golf ball (m)
+        
+        const theta = launchAngle * (Math.PI / 180);  //Convert degrees to radians
+        
+        const vx0 = initialVelocity * Math.cos(theta);
+        const vy0 = initialVelocity * Math.sin(theta);
+        
+        const trajectory = [];
+        const posArray = [];
+        
+        let pos = new Vector(0, startElevation);
+        let moveVector = new Vector(initialVelocity * Math.cos(theta), initialVelocity * Math.sin(theta));
+        let x = 0;
+        let y = startElevation;
+        let vx = vx0;
+        let vy = vy0;
+        trajectory.push({x, y});
+
+        function calculateLiftCoefficent(omega, v){
+            return (-2 * Math.PI * omega) / v;
+        };
+
+        function calculateMagnusForce(r, v, cl, rho){
+            let a = Math.PI * (r*r);
+            let FM = 0.5 * rho * (v * v) * cl * a;
+            return FM;
+        }
+        
+        // Simulation loop
+        let t = 0; 
+        let descent = false;  
+        let keepGoing = true;
+        let peakPoint; 
+        while(keepGoing){  
+            //Calculate Cl
+            //let Cl = 0.23// calculateLiftCoefficent(spinRate, moveVector)
+            if (vy < 0) {
+                descent = true;
+            }
+            if (descent){
+                if (y < endElevation){
+                    keepGoing = false;
+                }
+            }
+            
+            //console.log(calculateLiftCoefficent(spinRate, moveVector))
+            // Calculate relative velocity
+            let moveDistance = moveVector.length();
+            let spin = moveDistance - (spinRate * R);
+            const v = Math.sqrt(vx ** 2 + vy ** 2);
+            const vr = v - (spinRate * R);
+
+            
+            
+            // Calculate drag force
+            const Fd = 0.5 * C * rho * Math.PI * R ** 2 * v ** 2;
+            let dragArea = Math.PI * (R * R);
+            let dragForce = 0.5 * C * rho * dragArea * (moveDistance * moveDistance)
+            
+            // Calculate lift force (Magnus effect)
+            let Cl2 = calculateLiftCoefficent(spinRate, v);
+            let mf = calculateMagnusForce(R, v, Cl2, rho)
+
+            const Cl = 0.15; // Coefficient of lift (estimated value)
+            const Fl = Cl * Math.PI * R ** 2 * vr ** 2;
+            let liftForce = Cl * Math.PI * (R * R) * (spin * spin);
+            
+            // Calculate acceleration components
+            const ax = -Fd * vx / (m * v);
+            const ay = -g - (Fd * vy) / (m * v) + (Fl * vy) / (m * v);
+            let MassMove = m * moveDistance;
+            //let acc = new Vector(-dragForce * moveVector.x / MassMove, -g - (-dragForce * moveVector.y) / MassMove + (liftForce * moveVector.y) / MassMove);
+            let acc = new Vector(-dragForce * moveVector.x / MassMove, -g - (-dragForce * moveVector.y) / MassMove + (mf * moveVector.y) / MassMove);
+
+            // Update velocity components
+            vx += ax * timeStep;
+            vy += ay * timeStep;
+
+            acc = acc.scale(timeStep);
+            moveVector = moveVector.add(acc);
+
+            
+            
+            // Update position
+            x += vx * timeStep;
+            y += vy * timeStep;
+
+            moveVector = moveVector.scale(timeStep);
+            pos = pos.add(moveVector);
+
+            //Find Peak
+            if (vy < 0 && !descent){
+                peakPoint = {x, y};
+                descent = true;
+            }
+            
+            // Store position data
+            trajectory.push({ x, y });
+            posArray.push(pos);
+            t += timeStep
+            
+        }
+        
+        let xdis = trajectory[trajectory.length-1].x - trajectory[0].x;
+        return {steps: trajectory, peak: peakPoint, xDistance: xdis, posArr: posArray } ;
+    }
+
+    function DataChange(){
+        initialVelocity = ballSpeedSlider.value * 0.44704;
+        launchAngle = launchAngleSlider.value;
+        spinRate = ballSpinSlider.value * -1;
+        //airDensity = getAirDensity(altitudeSlider.value * 0.3048);
+        airDensity = getAirDensity(altitudeSlider.value);
+        console.log(elevationSlider.value)
+        let startEl = 0;
+        let endEl = 0
+        if (elevationSlider.value > 0){
+            startEl = 0;
+            endEl = Math.abs(elevationSlider.value) / 3.28084;
+        } else if (elevationSlider.value < 0){
+            startEl = Math.abs(elevationSlider.value) / 3.28084;
+            endEl = 0;
+        }
+        
+
+        trajectory = calculateTrajectoryWithMagnus(initialVelocity, launchAngle, spinRate, airDensity, dragCo, coefficientLift, mass, radius, timeStep, startEl, endEl);
+        Draw(trajectory.steps);
+        carryDistance.innerText = trajectory.xDistance;
+        peakHeight.innerText = trajectory.peak.y;
+    }
+
+    
+    function Draw(trajectory){
+        ctx.clearRect(0, 0, screenWidth, screenHeight);
+        let xDis = trajectory[trajectory.length-1].x-trajectory[0].x;
+        
+
+        zoom = (screenWidth/xDis) - 0.2;
+        let offsetY = -30;
+        let startPoint = new Vector(trajectory[0].x * zoom, (screenHeight + offsetY) - trajectory[0].y * zoom)
+        let groundHit = new Vector(trajectory[trajectory.length-1].x * zoom, (screenHeight + offsetY) - trajectory[trajectory.length-1].y * zoom)
+
+        ctx.beginPath();
+        ctx.moveTo(trajectory[0].x * zoom, (screenHeight + offsetY) - trajectory[0].y * zoom);
+        trajectory.forEach((p) => {
+            ctx.lineTo(p.x * zoom, (screenHeight + offsetY) - p.y * zoom);
+        });
+        ctx.stroke();
+        ctx.beginPath();
+        let screenOffSetY = screenHeight + offsetY;
+        let angle = Math.atan2((groundHit.y-startPoint.y), (groundHit.x-startPoint.x));
+        ctx.moveTo(startPoint.x, startPoint.y);
+        ctx.lineTo((Math.cos(angle) * 2000) + startPoint.x, (Math.sin(angle) * 2000) + startPoint.y)
+        ctx.lineTo(screenWidth, screenHeight);
+        ctx.lineTo(0, screenHeight);
+        ctx.lineTo(startPoint.x, startPoint.y)
+        ctx.fill();
+    }
+
+    function CalculateZoom(){
+
+    }
+    
+    var zoom = 6
+    var screenWidth = window.innerWidth;
+    var screenHeight = window.innerHeight;
+    var canvas = document.getElementById("canvas");
+    canvas.height = screenHeight;
+    canvas.width = screenWidth;
+    var ctx = canvas.getContext("2d");
+
+    let launchAngleSlider = document.getElementById("LaunchAngle");
+    let launchAngleText = document.getElementById("LaunchAngleText");
+    let ballSpeedSlider = document.getElementById("BallSpeed");
+    let ballSpeedText = document.getElementById("BallSpeedText");
+    let ballSpinSlider = document.getElementById("BallSpin");
+    let ballSpinText = document.getElementById("BallSpinText");
+    let altitudeSlider = document.getElementById("Altitude");
+    let altitudeText = document.getElementById("AltitudeText");
+    let elevationSlider = document.getElementById("ElevationDifference");
+    let elevationText = document.getElementById("ElevationDifferenceText");
+    
+    let peakHeight = document.getElementById("PeakHeight");
+    let carryDistance = document.getElementById("CarryDistance");
+
+    let dragCo = 0.10; //Drag coefficient 
+    let coefficientLift = 0.25; //Coefficient of lift
+    let mass = 0.04593; // Mass of a standard golf ball (kg)
+    let radius = 0.02135; // Radius of a standard golf ball (m)
+    let initialVelocity = ballSpeedSlider.value * 0.44704; // Initial velocity in m/s
+    let launchAngle = launchAngleSlider.value; // Launch angle in degrees
+    let airDensity = getAirDensity(altitudeSlider.value * 0.3048);
+    let spinRate = ballSpinSlider.value * -1; // Spin rate in RPM, negative for backspin
+    const timeStep = 0.05; // Time step for simulation (seconds)
+    const totalTime = 100; // Total simulation time (seconds)
+    let trajectory = calculateTrajectoryWithMagnus(initialVelocity, launchAngle, spinRate, airDensity, dragCo, coefficientLift, mass, radius, timeStep);
+    
+    launchAngleSlider.addEventListener("change", (e) => {
+        launchAngleText.value = launchAngleSlider.value
+        DataChange();
+    });
+
+    ballSpeedSlider.addEventListener("change", (e) => {
+        ballSpeedText.value = ballSpeedSlider.value;
+        DataChange();
+    });
+
+    ballSpinSlider.addEventListener("change", (e) => {
+        ballSpinText.value = ballSpinSlider.value;
+        DataChange();
+    });
+
+    altitudeSlider.addEventListener("change", (e) => {
+        altitudeText.value = altitudeSlider.value;
+        DataChange();
+    })
+
+    elevationSlider.addEventListener("change", (e) => {
+        elevationText.value = elevationSlider.value;
+        DataChange();
+    })
+
+
+    canvas.addEventListener("wheel", (e) => {
+        //console.log(e)
+        //if (e.deltaY < 0) { zoom--}
+        //if (e.deltaY > 0) { zoom++}
+        //Draw(trajectory.steps);
+        //DataChange();
+    })
+
+    
+
+    
+
+    //carryDistance.innerText = trajectory[trajectory.length-1].x * 1.09361;
+    //Draw(trajectory.steps);
+    DataChange();
+    
+
+    
+
+    
+
+</script>
