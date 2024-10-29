@@ -1,7 +1,7 @@
 <html></html>
     <head>
-        <title></title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <title>Weekly Scores</title>
+        
         <style>
             .header{
                 font-size: 25px;
@@ -85,17 +85,84 @@
             }
         </style>
         
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     </head>
     <body>
-        <div class="container-lg" id="mainContainer">
-            <div class="row" id="buttonRow">
-                
-                
-            </div>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="index.html">SimGolf League</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./Standing.html">Standings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./ScoreReport.html">Score-Counts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./Schedule.html">Schedule</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Full Scores
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                              <a class="dropdown-item" href="WeeklyScores.html?week=1">Week 1 @ Colonial Country Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=2">Week 2 @ Lone Wolf Golf Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=3">Week 3 @ Coeur dAlene Golf Resort</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=4">Week 4 @ Hanauma Cliffs</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=5">Week 5 @ Birdsfoot Golf Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=6">Week 6 @ The Pete Dye Course at French Lick</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=7">Week 7 @ Pete Dye River Course</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=8">Week 8 @ Hidden Shoals</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=9">Week 9 @ Pebble Beach Golf Links</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=10">Week 10 @ Crans-sur-Sierre Golf Club</a>
+                            </div>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </nav>
             
         </div>
         <div class="container-lg">
+            <div class="row">
+                <div class="col">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1" onclick="displayScoreType()" checked>
+                        <label class="form-check-label" for="inlineRadio1">Raw Scores</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2" onclick="displayScoreType()">
+                        <label class="form-check-label" for="inlineRadio2">Net Scores</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3"onclick="displayScoreType()">
+                        <label class="form-check-label" for="inlineRadio3">Both Scores</label>
+                      </div>
+                </div>
+                <div class="col">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Order by
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                          <a class="dropdown-item" onclick="order(0)">First Name</a>
+                          <a class="dropdown-item" onclick="order(1)">Last Name</a>
+                          <a class="dropdown-item" onclick="order(2)">Total Score</a>
+                          <a class="dropdown-item" onclick="order(3)">Net Score</a>
+                        </div>
+                      </div>
+                </div>
+            </div>
+            
+              
             <div class="row" id="courseData"></div>
             <table class="table" style="text-align: center;";>
                 <thead id="tableHead"></thead>
@@ -109,21 +176,66 @@
 <script>
     console.log(data)
 
-    function CalculateCourseHandicap(playerHandicap, Par, Rating, Slope){
-        return playerHandicap * (Slope/113) (Par-Rating)
+    function compare( a, b ) {
+        if ( a.last_nom < b.last_nom ){
+            return -1;
+        }
+        if ( a.last_nom > b.last_nom ){
+            return 1;
+        }
+        return 0;
     }
-
+    let displayType = 0;
     function cleanElement(name){
         let el = document.getElementById(name);
         el.innerHTML = "";
     }
 
     function clearTable(){
+        
+        cleanElement("courseData");
+    }
+
+    function displayScoreType(){
         cleanElement("tableHead");
         cleanElement("tableBody");
         cleanElement("tableFoot");
-        cleanElement("courseData");
+        let raw = document.getElementById("inlineRadio1");
+        let net = document.getElementById("inlineRadio2");
+        let both = document.getElementById("inlineRadio3");
+        
+        if (raw.checked) displayType = 0;
+        if (net.checked) displayType = 1;
+        if (both.checked) displayType = 2;
+        
+        CreateTable(weekData);
     }
+
+    function order(n){
+        cleanElement("tableHead");
+        cleanElement("tableBody");
+        cleanElement("tableFoot");
+        let reports = weekData.scoreReports;
+        console.log(reports);
+        if (n == 0){
+            reports.sort((a,b) => (a.firstName > b.firstName) ? 1 : ((b.firstName > a.firstName) ? -1 : 0))
+        } else if (n == 1){
+            reports.sort((a,b) => (a.lastName > b.lastName) ? 1 : ((b.lastName > a.lastName) ? -1 : 0))
+        } else if (n == 2){
+            reports.sort((a,b) => a.total - b.total);
+        } else if (n == 3){
+            reports.sort((a,b) => a.netTotal - b.netTotal);
+        }
+        CreateTable(weekData);
+    }
+
+    function CalculateCourseHandicap(playerHandicap, Par, Rating, Slope){
+        return playerHandicap * (Slope/113) (Par-Rating)
+    }
+
+    
+
+    
 
     function CreateButton(i){
         let div = document.createElement("div");
@@ -142,16 +254,15 @@
     }
 
     function CreateButtons(){
-        let row = document.getElementById("buttonRow");
+        /*let row = document.getElementById("buttonRow");
         for(var i = 1; i <= 10; i++){
             row.appendChild(CreateButton(i));
-        }
+        }*/
     }
 
     function CreateHeaderCell(d){
         let cell = document.createElement("td");
         cell.innerText = d;
-        //cell.classList.add("parRow")
         return cell;
     }
     function CreateHeaderRow(d, name, css){
@@ -171,16 +282,26 @@
         cell.style = "padding: 0px;";
         
         let rawScore = document.createElement("div");
-        rawScore.style = "border-bottom: 1px solid black;"
+        rawScore.classList.add("span2")
+        //rawScore.style = "border-bottom: 1px solid black;"
         rawScore.innerText = d;
         rawScore.classList.add(GetScoreColor(d, par));
 
+        
         let adjScore = document.createElement("div");
         adjScore.innerText = a;
         adjScore.classList.add(GetScoreColor(a, par));
-
-        cell.appendChild(rawScore);
-        cell.appendChild(adjScore);
+        if (displayType == 0){
+            cell.appendChild(rawScore);        
+        } else if (displayType == 1){
+            cell.appendChild(adjScore);
+        } else {
+            cell.appendChild(rawScore);        
+            cell.appendChild(adjScore);
+        }
+        
+        
+        
         return cell;
     }
 
@@ -188,8 +309,14 @@
         let row = document.createElement("tr");
         row.style = "border-bottom: 2px solid black;"
         let nameCell = document.createElement("td");
-        console.log(d)
-        nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.player.handicap + "</div>";
+        if (displayType == 0){
+            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div>";
+        } else if (displayType == 1){
+            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "(" + d.player.handicap + ")</div>";
+        } else {
+            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.player.handicap + "</div>";
+        }
+        
         nameCell.style = "padding: 0px";
         
         row.appendChild(nameCell);
@@ -252,9 +379,13 @@
             tableBody.appendChild(CreateScoreRow(s, d.pars, d.indexes))
         });
 
-        tableFooter.appendChild(CreateHeaderRow(d.pars, "Par", "parRow"));
-        tableFooter.appendChild(CreateHeaderRow(d.indexes, "Handicap", "handicapRow"));
-        
+        tableHeader.appendChild(CreateHeaderRow(d.pars, "Par", "parRow"));
+        tableHeader.appendChild(CreateHeaderRow(d.indexes, "Handicap", "handicapRow"));
+        if (displayType != 1){
+            tableFooter.appendChild(CreateHeaderRow(d.overs, "Total Over", "handicapRow"));
+            tableFooter.appendChild(CreateHeaderRow(d.totals, "Total Strokes", "handicapRow"));
+            tableFooter.appendChild(CreateHeaderRow(d.difficulty, "Our Handicap", "handicapRow"));
+        }
 
     }
 
@@ -278,8 +409,79 @@
         
     }
 
-    CreateCourseData(data[1]);
-    CreateTable(data[1]);
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const week = urlParams.get('week');
+    
+    let weekData = data[week];
+
+    class holeDifficulty{
+        constructor(hole, total, over, par, yardage){
+            this.Hole = hole;
+            this.Total = total;
+            this.Over = over;
+            this.Par = par;
+            this.Yardage = yardage;
+            this.Difficulty = 0;
+        }
+
+    }
+
+    let TotalArr = [];
+    for(var i = 0; i < 18; i++){
+        TotalArr.push(new holeDifficulty(i+1, 0, 0, data[week].pars[i], data[week].yardages[i]))
+    }
+    
+    data[week].scoreReports.forEach((s) => {
+        for (var i = 0; i < 18; i++) {
+             TotalArr[i].Total += s.scores[i];
+             TotalArr[i].Over += (s.scores[i] - data[week].pars[i]);
+        }
+    });
+
+    TotalArr.sort((a, b) => {
+        return a.Over - b.Over;
+    });
+
+    let diffOrder = 1;
+    TotalArr.forEach((t) => {
+        t.Difficulty = diffOrder;
+        diffOrder++;
+    });
+    TotalArr.sort((a, b) => {
+        return a.Hole - b.Hole;
+    });
+
+
+    let overs = [];
+    let totals = [];
+    let difficulty = []
+    TotalArr.forEach((t) => {
+        overs.push(Math.round(t.Over * 10) / 10);
+        totals.push(Math.round(t.Total * 10) / 10);
+        difficulty.push(t.Difficulty);
+    });
+
+    //addSortdata
+    weekData.scoreReports.forEach((r) => {
+        r.firstName = r.player.firstName;
+        r.lastName = r.player.lastName;
+        let sum = 0;
+        r.scores.forEach((s) => {
+            sum += s;
+        });
+        r.total = sum;
+        r.netTotal = sum - r.player.handicap
+    });
+    
+    
+    weekData.overs = overs;
+    weekData.difficulty = difficulty;
+    weekData.totals = totals;
+    console.log(weekData)
+
+    CreateCourseData(weekData);
+    CreateTable(weekData);
     CreateButtons();
 
 </script>
