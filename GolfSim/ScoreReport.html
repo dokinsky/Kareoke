@@ -11,6 +11,45 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     </head>
     <body>
+        <div class="container"></div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="index.html">SimGolf League</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./Standing.html">Standings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./ScoreReport.html">Score-Counts</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./Schedule.html">Schedule</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              Full Scores
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                              <a class="dropdown-item" href="WeeklyScores.html?week=1">Week 1 @ Colonial Country Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=2">Week 2 @ Lone Wolf Golf Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=3">Week 3 @ Coeur dAlene Golf Resort</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=4">Week 4 @ Hanauma Cliffs</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=5">Week 5 @ Birdsfoot Golf Club</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=6">Week 6 @ The Pete Dye Course at French Lick</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=7">Week 7 @ Pete Dye River Course</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=8">Week 8 @ Hidden Shoals</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=9">Week 9 @ Pebble Beach Golf Links</a>
+                              <a class="dropdown-item" href="WeeklyScores.html?week=10">Week 10 @ Crans-sur-Sierre Golf Club</a>
+                            </div>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </nav>
+        </div>
         <div class="container-lg" id="mainContainer">
            <table class="table">
                 <thead id="tableHead">
@@ -56,7 +95,7 @@
 
     function createTableBody(){
         let body = document.getElementById("tableBody");
-        ScoreReportNetData.forEach((r) => {
+        ScoreReportData.forEach((r) => {
             body.appendChild(createTableRow(r));
         })
     }
