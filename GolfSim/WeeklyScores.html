@@ -44,6 +44,13 @@
                 background-color: #AAA;
             }
 
+            .briancondor{
+                animation-duration: 1s;
+                animation-name: brian-condor;
+                animation-iteration-count: infinite;
+            }
+
+            
             .condor{
                 background-color: #0F0 !important;
             }
@@ -83,6 +90,28 @@
             .course{
                 font-size: 25px;
             }
+
+
+            @keyframes Bir {
+                25%{
+                    background-color: blue;
+                }
+                50%             
+                {
+                    background-color: red;
+                }
+
+                75% 
+                {
+                    
+                    background-color: white;
+                }
+                100%{
+                    background-color: purple;
+                }
+            }
+
+
         </style>
         
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -91,49 +120,30 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     </head>
     <body>
-        <div class="container">
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                <a class="navbar-brand" href="index.html">SimGolf League</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link" href="./Standing.html">Standings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="./ScoreReport.html">Score-Counts</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="./Schedule.html">Schedule</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                              Full Scores
-                            </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                              <a class="dropdown-item" href="WeeklyScores.html?week=1">Week 1 @ Colonial Country Club</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=2">Week 2 @ Lone Wolf Golf Club</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=3">Week 3 @ Coeur dAlene Golf Resort</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=4">Week 4 @ Hanauma Cliffs</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=5">Week 5 @ Birdsfoot Golf Club</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=6">Week 6 @ The Pete Dye Course at French Lick</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=7">Week 7 @ Pete Dye River Course</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=8">Week 8 @ Hidden Shoals</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=9">Week 9 @ Pebble Beach Golf Links</a>
-                              <a class="dropdown-item" href="WeeklyScores.html?week=10">Week 10 @ Crans-sur-Sierre Golf Club</a>
-                            </div>
-                        </li>
-                        
-                    </ul>
-                </div>
-            </nav>
+        <div class="container" id="navbarContainer"></div>
             
-        </div>
         <div class="container-lg">
             <div class="row">
-                <div class="col">
+                <div class="col-2">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" style="width: 100%;" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Course
+                          </button>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-item" href="WeeklyScores.html?week=1">Week 1 @ Colonial Country Club</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=2">Week 2 @ Lone Wolf Golf Club</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=3">Week 3 @ Coeur dAlene Golf Resort</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=4">Week 4 @ Hanauma Cliffs</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=5">Week 5 @ Birdsfoot Golf Club</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=6">Week 6 @ The Pete Dye Course at French Lick</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=7">Week 7 @ Pete Dye River Course</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=8">Week 8 @ Hidden Shoals</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=9">Week 9 @ Pebble Beach Golf Links</a>
+                            <a class="dropdown-item" href="WeeklyScores.html?week=10">Week 10 @ Crans-sur-Sierre Golf Club</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-9">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1" onclick="displayScoreType()" checked>
                         <label class="form-check-label" for="inlineRadio1">Raw Scores</label>
@@ -147,9 +157,9 @@
                         <label class="form-check-label" for="inlineRadio3">Both Scores</label>
                       </div>
                 </div>
-                <div class="col">
+                <div class="col-1">
                     <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                           Order by
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -160,9 +170,8 @@
                         </div>
                       </div>
                 </div>
+                
             </div>
-            
-              
             <div class="row" id="courseData"></div>
             <table class="table" style="text-align: center;";>
                 <thead id="tableHead"></thead>
@@ -172,19 +181,12 @@
         </div>
     </body>
 </html>
+<script src="./JS/navbar.js"></script>
 <script src="JS/WeeklyReportData.js"></script>
-<script>
-    console.log(data)
 
-    function compare( a, b ) {
-        if ( a.last_nom < b.last_nom ){
-            return -1;
-        }
-        if ( a.last_nom > b.last_nom ){
-            return 1;
-        }
-        return 0;
-    }
+<script>
+    window.onload = createNavBar();
+    
     let displayType = 0;
     function cleanElement(name){
         let el = document.getElementById(name);
@@ -310,9 +312,9 @@
         row.style = "border-bottom: 2px solid black;"
         let nameCell = document.createElement("td");
         if (displayType == 0){
-            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div>";
+            nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "</div>";
         } else if (displayType == 1){
-            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "(" + d.player.handicap + ")</div>";
+            nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "(" + d.player.handicap + ")</div>";
         } else {
             nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.player.handicap + "</div>";
         }
@@ -409,12 +411,6 @@
         
     }
 
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const week = urlParams.get('week');
-    
-    let weekData = data[week];
-
     class holeDifficulty{
         constructor(hole, total, over, par, yardage){
             this.Hole = hole;
@@ -427,15 +423,30 @@
 
     }
 
+
+    function formatData(d){
+
+    }
+
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const week = urlParams.get('week');
+    
+    let weekData = data[week];
+
+    
     let TotalArr = [];
     for(var i = 0; i < 18; i++){
         TotalArr.push(new holeDifficulty(i+1, 0, 0, data[week].pars[i], data[week].yardages[i]))
     }
     
     data[week].scoreReports.forEach((s) => {
-        for (var i = 0; i < 18; i++) {
-             TotalArr[i].Total += s.scores[i];
-             TotalArr[i].Over += (s.scores[i] - data[week].pars[i]);
+        console.log(s)
+        if (s.scores.length == 18){
+            for (var i = 0; i < 18; i++) {
+                TotalArr[i].Total += s.scores[i];
+                TotalArr[i].Over += (s.scores[i] - data[week].pars[i]);
+            }
         }
     });
 
@@ -443,10 +454,10 @@
         return a.Over - b.Over;
     });
 
-    let diffOrder = 1;
+    let diffOrder = 18;
     TotalArr.forEach((t) => {
         t.Difficulty = diffOrder;
-        diffOrder++;
+        diffOrder--;
     });
     TotalArr.sort((a, b) => {
         return a.Hole - b.Hole;
