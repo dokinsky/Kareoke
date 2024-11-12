@@ -16,7 +16,15 @@
         <div class="container-lg" id="navbarContainer"></div>
         <div class="container-lg" id="mainContainer">
            <table class="table">
-                <thead id="tableHead"></thead>
+                <thead id="tableHead">
+                    <tr>
+                        <th>Golfer</th>
+                        <th style="text-align: center;">Handicaps</th>
+                        <th style="text-align: center;">Strokes Over</th>
+                        <th style="text-align: center;">Net Strokes Over</th>
+                        <th style="text-align: center;">Points</th>
+                    </tr>
+                </thead>
                 <tbody id="tableBody"></tbody>
            </table>
         </div>
@@ -25,29 +33,13 @@
     </body>
 </html>
 <script src="./JS/navbar.js"></script>
+<script src="./JS/WeeklyReportData.js"></script>
 <script>
     window.onload = createNavBar();
     let mainContainer = document.getElementById("mainContainer");
     let tableHead = document.getElementById("tableHead");
     let tableBody = document.getElementById("tableBody");
-    let reportData = [
-        {Place: 1, Golfer: "Dave Okinsky", Score: 15, GamesPlayed: 1, Strokes: 10, NetStrokes: 10 },
-        {Place: 2, Golfer: "Steve Okinsky", Score: 14, GamesPlayed: 1},
-        {Place: 3, Golfer: "Nathan Pannell", Score: 13, GamesPlayed: 1},
-        {Place: 4, Golfer: "Bob Soules", Score: 12, GamesPlayed: 1},
-        {Place: 5, Golfer: "Brian Corr", Score: 11, GamesPlayed: 1},
-        {Place: 6, Golfer: "James Mcgrath", Score: 9, GamesPlayed: 1},
-        {Place: 7, Golfer: "Marc Fry", Score: 8, GamesPlayed: 1},
-        {Place: 8, Golfer: "Mark Fockler", Score: 7, GamesPlayed: 1},
-        {Place: 9, Golfer: "Ryan Wheeler", Score: 6, GamesPlayed: 1},
-        {Place: 10, Golfer: "Brian Johnson", Score: 5, GamesPlayed: 1},
-        {Place: 11, Golfer: "Matt Blow", Score: 4, GamesPlayed: 1},
-        {Place: 12, Golfer: "Steve Heaton", Score: 3, GamesPlayed: 1},
-        {Place: 13, Golfer: "Pete Harrison", Score: 2, GamesPlayed: 1},
-        {Place: 14, Golfer: "Rob Forde", Score: 1, GamesPlayed: 1},
-        {Place: 15, Golfer: "Danny Martel", Score: 0, GamesPlayed: 1},
-        {Place: 16, Golfer: "Chris Mack", Score: 0, GamesPlayed: 1},
-        ];
+    let reportData = StandingData;
 
     function createHeader(firstRecord){
         let headerRow = document.createElement("tr");
@@ -65,31 +57,72 @@
 
     function CreateCell(cellData){
         let div = document.createElement("td");
+        div.style = "font-size: 20px"
         div.innerText = cellData;
         return div;
     }
 
+    function CreateSum(total, arr){
+        let cell = document.createElement("td");
+        cell.style = "text-align: center"
+        let topDiv = document.createElement("div");
+        let botDiv = document.createElement("div");
+        botDiv.style = "font-size:12px"
+        topDiv.innerHTML = total;
+        botDiv.innerHTML = "(" + arr + ")";
+        cell.appendChild(topDiv);
+        cell.appendChild(botDiv);
+        return cell;
+    }
+
     function CreateRow(rowData){
-        let div = document.createElement("tr");
-        Object.keys(rowData).forEach(key => {
-            div.appendChild(CreateCell(rowData[key]));
-        });
+        let row = document.createElement("tr");
+        row.appendChild(CreateCell(rowData.GolferName));
+
+        row.appendChild(CreateSum(rowData.TotalStrokes, rowData.scores))
+        row.appendChild(CreateSum(rowData.Handicap, rowData.handicaps))
+        row.appendChild(CreateSum(rowData.TotalNetStrokes, rowData.netScores))
+        row.appendChild(CreateSum(rowData.TotalPoints, rowData.points))
+
+        //Object.keys(rowData).forEach(key => {
+        //    div.appendChild(CreateCell(rowData[key]));
+        //});
         
-        return div;
+        return row;
     };
 
-    
-
     function CreateReport(data, head, body){
-        let header = createHeader(data[0])
-        head.appendChild(header);
+        //let header = createHeader(data[0])
+        //head.appendChild(header);
         data.forEach((r) => {
             body.appendChild(CreateRow(r));
         })
         
     }
 
+    
+    function FormatTotals(data, week){
+        data.forEach((d) => {
+            d.GolferName = d.player.firstName + " " + d.player.lastName;
+            d.TotalPoints = 0;
+            d.TotalStrokes = 0;
+            d.TotalNetStrokes = 0;
+            d.Handicap = d.handicaps.pop();
+            for (var i = 0; i <= week; i++){
+                d.TotalPoints += d.points[i];
+                d.TotalStrokes += d.scores[i];
+                d.TotalNetStrokes += d.netScores[i];
+            };
+            d.TotalNetStrokes = Math.round(d.TotalNetStrokes * 10) / 10;
+            d.TotalStrokes = Math.round(d.TotalStrokes * 10) / 10;
+        });
+        return data;
+    }
 
+    reportData = FormatTotals(reportData, 3);
+    
+    reportData.sort((a,b) => b.TotalPoints - a.TotalPoints )
+    console.log(reportData)
     CreateReport(reportData, tableHead, tableBody);
 
 
