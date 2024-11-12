@@ -226,7 +226,7 @@
         } else if (n == 2){
             reports.sort((a,b) => a.total - b.total);
         } else if (n == 3){
-            reports.sort((a,b) => a.netTotal - b.netTotal);
+            reports.sort((a,b) => (a.netTotal > b.netTotal) ? 1 : ((b.netTotal > a.netTotal) ? -1 : 0));// a.netTotal - b.netTotal);
         }
         CreateTable(weekData);
     }
@@ -314,9 +314,9 @@
         if (displayType == 0){
             nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "</div>";
         } else if (displayType == 1){
-            nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "(" + d.player.handicap + ")</div>";
+            nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "(" + d.handicap.value + ")</div>";
         } else {
-            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.player.handicap + "</div>";
+            nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.handicap.value + "</div>";
         }
         
         nameCell.style = "padding: 0px";
@@ -326,7 +326,7 @@
         let adjTotal = 0;
         for (var i = 0; i < d.scores.length; i++){
             total+=d.scores[i];
-            let adj = findHandicapAdjustment(handicap[i], d.player.handicap);
+            let adj = findHandicapAdjustment(handicap[i], d.handicap.value);
             let adjustedScore = Math.round((d.scores[i] - adj) * 10) / 10;
             adjTotal+=adjustedScore;
             row.appendChild(CreateScoreCell(d.scores[i], adjustedScore, pars[i]));
@@ -481,8 +481,8 @@
         r.scores.forEach((s) => {
             sum += s;
         });
-        r.total = sum;
-        r.netTotal = sum - r.player.handicap
+        r.total = Math.round(sum * 10) / 10;
+        r.netTotal = Math.round((sum - r.handicap.value) * 10) / 10;
     });
     
     
