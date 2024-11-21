@@ -311,6 +311,7 @@
         let row = document.createElement("tr");
         row.style = "border-bottom: 2px solid black;"
         let nameCell = document.createElement("td");
+        
         if (displayType == 0){
             nameCell.innerHTML = "<div>" + d.player.firstName[0] + " " + d.player.lastName + "</div>";
         } else if (displayType == 1){
@@ -318,6 +319,7 @@
         } else {
             nameCell.innerHTML = "<div>" + d.player.firstName + " " + d.player.lastName + "</div><div> Handicap: " + d.handicap.value + "</div>";
         }
+        
         
         nameCell.style = "padding: 0px";
         
@@ -481,8 +483,13 @@
         r.scores.forEach((s) => {
             sum += s;
         });
-        r.total = Math.round(sum * 10) / 10;
-        r.netTotal = Math.round((sum - r.handicap.value) * 10) / 10;
+        if (r.total != null && r.handicap != null){
+            r.total = Math.round(sum * 10) / 10;
+            r.netTotal = Math.round((sum - r.handicap.value) * 10) / 10;
+        } else {
+            r.total = 0;
+            r.netTotal = 0;
+        }
     });
     
     
