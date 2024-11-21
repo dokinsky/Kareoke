@@ -15,16 +15,12 @@
     <body>
         <div class="container-lg" id="navbarContainer"></div>
         <div class="container-lg" id="mainContainer">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="changeDataCheck" onclick="ChangeData()">
+                <label class="form-check-label" for="changeDataCheck">Details</label>
+            </div>
            <table class="table">
-                <thead id="tableHead">
-                    <tr>
-                        <th>Golfer</th>
-                        <th style="text-align: center;">Strokes Over</th>
-                        <th style="text-align: center;">Handicaps</th>
-                        <th style="text-align: center;">Net Strokes Over</th>
-                        <th style="text-align: center;">Points</th>
-                    </tr>
-                </thead>
+                <thead id="tableHead"></thead>
                 <tbody id="tableBody"></tbody>
            </table>
         </div>
@@ -41,14 +37,14 @@
     let tableBody = document.getElementById("tableBody");
     let reportData = StandingData;
 
-    function createHeader(firstRecord){
+    function createHeader(simple = true){
         let headerRow = document.createElement("tr");
         headerRow.classList.add("header");
-        Object.keys(firstRecord).forEach(key => {
-            let col = document.createElement("th");
-            col.innerText = key;
-            headerRow.appendChild(col);
-        });
+        if (simple){
+            headerRow.innerHTML = '<th>Rank</th><th>Golfer</th><th>Points</th>';
+        } else {
+            headerRow.innerHTML = '<th>Rank</th><th>Golfer</th><th style="text-align: center;">Strokes Over</th><th style="text-align: center;">Handicaps</th><th style="text-align: center;">Net Strokes Over</th><th style="text-align: center;">Points</th>';
+        }
         return headerRow;
     }
 
@@ -57,46 +53,67 @@
 
     function CreateCell(cellData){
         let div = document.createElement("td");
-        div.style = "font-size: 20px"
+        div.style = "font-size: 24px"
         div.innerText = cellData;
         return div;
     }
 
-    function CreateSum(total, arr){
+    function CreateSum(total, arr, arr2){
         let cell = document.createElement("td");
         cell.style = "text-align: center"
         let topDiv = document.createElement("div");
+        topDiv.style = "font-weight: bold"
         let botDiv = document.createElement("div");
-        botDiv.style = "font-size:12px"
+        botDiv.style = "font-size:11px"
         topDiv.innerHTML = total;
-        botDiv.innerHTML = "(" + arr + ")";
+        botDiv.innerHTML = "<div>(" + arr + ")</div>";
+        if (arr2 != null){
+            botDiv.innerHTML = "<div>(" + arr + ")</div><div>(" + arr2 + ")</div>";
+        }
         cell.appendChild(topDiv);
         cell.appendChild(botDiv);
         return cell;
     }
 
-    function CreateRow(rowData){
+    function CreateRow(rowData, i){
+        console.log(rowData)
         let row = document.createElement("tr");
+        row.appendChild(CreateCell(i));
         row.appendChild(CreateCell(rowData.GolferName));
 
-        row.appendChild(CreateSum(rowData.TotalStrokes, rowData.scores))
-        row.appendChild(CreateSum(rowData.Handicap, rowData.handicaps))
+        row.appendChild(CreateSum(rowData.TotalStrokes, rowData.scores, null))
+        row.appendChild(CreateSum(rowData.Handicap, rowData.handicaps, rowData.courseHandicaps))
         row.appendChild(CreateSum(rowData.TotalNetStrokes, rowData.netScores))
         row.appendChild(CreateSum(rowData.TotalPoints, rowData.points))
-
-        //Object.keys(rowData).forEach(key => {
-        //    div.appendChild(CreateCell(rowData[key]));
-        //});
         
         return row;
     };
 
+    function CreateSimpleRow(rowData, i){
+        let row = document.createElement("tr");
+        row.appendChild(CreateCell(i));
+        row.appendChild(CreateCell(rowData.GolferName));
+        row.appendChild(CreateCell(rowData.TotalPoints));
+        return row;
+    }
+
     function CreateReport(data, head, body){
-        //let header = createHeader(data[0])
-        //head.appendChild(header);
+        head.appendChild(createHeader(false))
+        let row = 1;
         data.forEach((r) => {
-            body.appendChild(CreateRow(r));
+            body.appendChild(CreateRow(r, row));
+            row++;
         })
+        
+    }
+
+    function CreateSimpleReport(data, head, body){
+        head.appendChild(createHeader())
+        let row = 1;
+        data.forEach((r) => {
+            body.appendChild(CreateSimpleRow(r, row));
+            row++;
+        });
         
     }
 
@@ -118,12 +135,25 @@
         });
         return data;
     }
-
-    reportData = FormatTotals(reportData, 3);
-    
+    reportData = FormatTotals(reportData, 4);
     reportData.sort((a,b) => b.TotalPoints - a.TotalPoints )
-    console.log(reportData)
-    CreateReport(reportData, tableHead, tableBody);
+    
+    function ChangeData(){
+        let check = document.getElementById("changeDataCheck");
+
+        tableHead.innerHTML = "";
+        tableBody.innerHTML = "";
+
+        if (check.checked){
+            CreateReport(reportData, tableHead, tableBody);
+        } else {
+            CreateSimpleReport(reportData, tableHead, tableBody);
+        }
+
+        console.log(check.checked)
+    }
+
+    ChangeData();
 
 
     
