@@ -86,6 +86,7 @@
             <p><strong>Decoration:</strong> <span id="decorationValue"></span></p>
             <p><strong>Established:</strong> <span id="establishedDate"></span></p>
             <p><strong>Location:</strong> <span id="cityStateCountry"></span></p>
+            <p><strong>Altitude:</strong> <span id="altitudeValue"></span></p>
             <p class="location-map"><strong>Map Coordinates:</strong> Latitude: <span id="latitudeValue"></span>, Longitude: <span id="longitudeValue"></span></p>
         </div>
 
@@ -287,6 +288,8 @@
             return;
         }
 
+        holes.sort((a,b) => a.HoleNo - b.HoleNo);
+
         holes.forEach(hole => {
             // Find the specific tee data for the current hole
             const teeData = hole.Tees.find(tee => tee.TeeRef === teeRef); 
@@ -319,6 +322,8 @@
         document.getElementById('parValue').textContent = course.Par;
         document.getElementById('decorationValue').textContent = course.Decoration;
         document.getElementById('establishedDate').textContent = course.EstablishedDate;
+        document.getElementById("altitudeValue").textContent = course.Altitude;
+
         
         const stateParts = course.State.split(',');
         const stateName = stateParts.length > 0 ? stateParts[0].trim() : course.State;
