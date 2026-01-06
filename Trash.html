@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Norfolk Trash Schedule</title>
+    <style>
+        /* Layout Setup */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden;
+            flex-direction: column;
+        }
+        .site-header {
+            background-color:  rgb(0, 54, 108);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .site-header img {
+            height: 50px; /* Adjust based on your logo size */
+            margin-right: 20px;
+        }
+
+        .site-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: rgb(108, 155, 0);
+        }
+        /* Left Panel: Search */
+        .search-sidebar {
+            width: 350px;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Right Panel: Results */
+        .details-panel {
+            flex: 1; /* Takes up remaining space */
+            padding: 40px;
+            background-color: white;
+            overflow-y: auto;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 2px solid #0078d4;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .card {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .placeholder-text {
+            color: #888;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        h2 { margin-top: 0; color: rgb(108, 155, 0); background-color: rgb(0, 54, 108); padding: 20px; }
+        label { font-weight: bold;  margin-bottom: 5px; font-size: 0.9rem; }
+        .data-row { margin-bottom: 15px; border-bottom: 1px solid #eee; }
+
+        .dateRow {
+            background-color: #eeeeee;
+        }
+        .dateRowAlt {
+            background-color: #fefefe;
+        }
+        .main-container {
+            display: flex; /* Move your original body flex here */
+            flex: 1;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <!--<img scr="https://www.norfolkva.gov/BootstrapCore/images/mobilenorfolkv2-257.png" alt="City of Norfolk">-->
+        <h1>Norfolk Recycling and Trash Schedule</h1>
+    </header>
+    <div class="main-container">
+        <div class="search-sidebar">
+            <h2>Address Search</h2>
+            <input type="text" id="addressInput" list="addressList" placeholder="Start typing address...">
+            <datalist id="addressList"></datalist>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">
+                Results update as you type. Select an address to view data.
+            </p>
+        </div>
+
+        <div class="details-panel" id="detailsPanel">
+            <div class="placeholder-text" id="placeholder">
+                <h3>No Address Selected</h3>
+                <p>Search for and select an address on the left to view details.</p>
+            </div>
+            
+            <div id="content" style="display: none;">
+                <h2 id="displayAddress">---</h2>
+                <div class="card">
+                    <!--<div class="data-row"><label>GPIN:</label> <span id="gpin"></span></div>-->
+                    <div class="data-row"><label>Trash Pickup:</label> <span id="trash"></span></div>
+                    <div class="data-row"><label>Recycling Week:</label> <span id="recycling"></span></div>
+                    <div class="data-row"><label>Upcoming Recycling Dates:</label> <div id="dates"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const input = document.getElementById('addressInput');
+        const datalist = document.getElementById('addressList');
+        const content = document.getElementById('content');
+        const placeholder = document.getElementById('placeholder');
+        
+        let searchCache = {};
+
+        input.addEventListener('input', async (e) => {
+            const val = e.target.value;
+            if (searchCache[val]) {
+                renderDetails(searchCache[val]);
+                return;
+            }
+            if (val.length < 3) return;
+
+            const baseUrl = "https://data.norfolk.gov/resource/ere7-kake.json";
+            const params = new URLSearchParams({
+                "$select": "full_address,gpin,trash_day,recycling_week",
+                "$where": `upper(full_address) like upper('%${val}%')`,
+                "$limit": "10"
+            });
+
+            try {
+                const response = await fetch(`${baseUrl}?${params.toString()}`);
+                const data = await response.json();
+                
+                console.log(data);
+                datalist.innerHTML = '';
+                searchCache = {}; 
+
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.full_address;
+                    datalist.appendChild(option);
+                    searchCache[item.full_address] = item;
+                });
+            } catch (err) {
+                console.error("API Error:", err);
+            }
+        });
+
+        function renderDetails(data) {
+            placeholder.style.display = 'none';
+            content.style.display = 'block';
+
+            document.getElementById('displayAddress').innerText = data.full_address;
+            //document.getElementById('gpin').innerText = data.gpin || 'N/A';
+            document.getElementById('trash').innerText = data.trash_day || 'N/A';
+            document.getElementById('recycling').innerText = data.recycling_week || 'N/A';
+
+            if (data.trash_day && data.recycling_week) {
+                const dates = getNextRecyclingDates(data.trash_day, data.recycling_week);
+                document.getElementById('dates').innerHTML = dates;
+            } else {
+                document.getElementById('dates').innerText = 'No schedule found';
+            }
+        }
+
+        function getNextRecyclingDates(dayName, weekType) {
+            const days = { 'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6 };
+            const targetDay = days[dayName.toUpperCase()];
+            if (targetDay === undefined) return 'N/A';
+
+            let results = [];
+            let today = new Date();
+            
+            // Reference: Dec 28, 2025 starts a "Week One" cycle for Norfolk 2026
+            let startDate = new Date('2025/12/28'); 
+            let referenceDate;
+
+            while(startDate < today){
+                referenceDate = new Date(startDate);
+                startDate.setDate(startDate.getDate() + 14);
+                
+            }
+            const MS_PER_WEEK = 1000 * 60 * 60 * 24 * 7;
+            
+            // Look ahead up to 10 weeks to find the next 3 matching dates
+            for (let i = 0; i < 20; i++) {
+                let checkDate = new Date(referenceDate);
+                checkDate.setDate(referenceDate.getDate() + (i * 7) + targetDay);
+                
+                // Determine if this specific week is Week One or Week Two
+                // Week 0 = Week One, Week 1 = Week Two, Week 2 = Week One...
+                const weekNum = i % 2 === 0 ? "WEEK ONE" : "WEEK TWO";
+
+                // If the week matches the data AND the date is today or in the future
+                if (weekNum === weekType.toUpperCase() && checkDate >= new Date(today.setHours(0,0,0,0))) {
+                    results.push(checkDate.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        month: 'long', 
+                        day: 'numeric', 
+                        year: 'numeric'
+                    }));
+                }
+                if (results.length >= 10) break;
+            }
+            let returnHTML = "";
+            let count = 0;
+            results.forEach(r => {
+                if (count % 2 == 0) {
+                    returnHTML += "<div class='dateRow'>" + r + "</div>";
+                }
+                else {
+                    returnHTML += "<div class='dateRowAlt'>" + r + "</div>";
+                }
+                count++;
+            })
+
+            //return results.length > 0 ? results.join(' | ') : 'No upcoming dates';
+            return returnHTML;
+        }
+    </script>
+</body>
+</html>
