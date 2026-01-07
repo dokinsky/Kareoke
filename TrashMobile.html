@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norfolk Trash Schedule</title>
+    <style>
+        :root {
+            --norfolk-blue: rgb(0, 54, 108);
+            --norfolk-green: rgb(108, 155, 0);
+            --bg-light: #f8f9fa;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg-light);
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .site-header {
+            background-color: var(--norfolk-blue);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .site-header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--norfolk-green);
+        }
+
+        .main-container {
+            display: flex; 
+            flex-direction: column; /* Stacked for mobile by default */
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .search-sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        h2 { 
+            margin-top: 0; 
+            color: var(--norfolk-blue); 
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--norfolk-green);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px; /* Larger touch target */
+            box-sizing: border-box;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px; /* Prevents iOS auto-zoom on focus */
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--norfolk-blue);
+        }
+
+        .details-panel {
+            flex: 1; 
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .placeholder-text {
+            color: #777;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .data-row { 
+            padding: 12px 0;
+            border-bottom: 1px solid #eee; 
+        }
+
+        .data-row:last-child { border-bottom: none; }
+
+        label { 
+            display: block;
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            color: var(--norfolk-blue);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        #displayAddress {
+            font-size: 1.3rem;
+            background: none;
+            color: var(--norfolk-blue);
+            padding: 0;
+            margin-bottom: 15px;
+            border: none;
+        }
+
+        .date-list {
+            margin-top: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .dateRow, .dateRowAlt { 
+            padding: 10px; 
+            font-size: 0.95rem;
+        }
+        .dateRow { background-color: #f1f1f1; }
+        .dateRowAlt { background-color: #ffffff; }
+
+        /* Desktop Adjustment */
+        @media (min-width: 768px) {
+            .main-container {
+                flex-direction: row;
+                gap: 20px;
+                padding: 40px 20px;
+                max-width: 1000px;
+            }
+            .search-sidebar {
+                width: 350px;
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <h1>Norfolk Recycling and Trash Schedule</h1>
+    </header>
+
+    <div class="main-container">
+        <section class="search-sidebar">
+            <h2>Find Your Address</h2>
+            <input type="text" id="addressInput" list="addressList" placeholder="Ex: 123 Main St">
+            <datalist id="addressList"></datalist>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 12px;">
+                Type at least 3 characters to see suggestions.
+            </p>
+        </section>
+
+        <main class="details-panel" id="detailsPanel">
+            <div class="placeholder-text" id="placeholder">
+                <p>Enter an address above to view your personalized trash and recycling schedule.</p>
+            </div>
+            
+            <div id="content" style="display: none;">
+                <h2 id="displayAddress">---</h2>
+                <div class="card">
+                    <div class="data-row">
+                        <label>Trash Pickup</label>
+                        <span id="trash"></span>
+                    </div>
+                    <div class="data-row">
+                        <label>Recycling Week</label>
+                        <span id="recycling"></span>
+                    </div>
+                    <div class="data-row">
+                        <label>Upcoming Recycling Dates</label>
+                        <div id="dates" class="date-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const input = document.getElementById('addressInput');
+        const datalist = document.getElementById('addressList');
+        const content = document.getElementById('content');
+        const placeholder = document.getElementById('placeholder');
+        
+        let searchCache = {};
+
+        input.addEventListener('input', async (e) => {
+            const val = e.target.value.trim();
+            
+            // Check cache first
+            if (searchCache[val]) {
+                renderDetails(searchCache[val]);
+                return;
+            }
+
+            if (val.length < 3) return;
+
+            const baseUrl = "https://data.norfolk.gov/resource/ere7-kake.json";
+            const params = new URLSearchParams({
+                "$select": "full_address,gpin,trash_day,recycling_week",
+                "$where": `upper(full_address) like upper('%${val}%')`,
+                "$limit": "8"
+            });
+
+            try {
+                const response = await fetch(`${baseUrl}?${params.toString()}`);
+                const data = await response.json();
+                
+                datalist.innerHTML = '';
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.full_address;
+                    datalist.appendChild(option);
+                    searchCache[item.full_address] = item;
+                });
+
+                // If exact match found in typing
+                if (searchCache[val]) renderDetails(searchCache[val]);
+
+            } catch (err) {
+                console.error("API Error:", err);
+            }
+        });
+
+        function renderDetails(data) {
+            placeholder.style.display = 'none';
+            content.style.display = 'block';
+
+            document.getElementById('displayAddress').innerText = data.full_address;
+            document.getElementById('trash').innerText = data.trash_day || 'N/A';
+            document.getElementById('recycling').innerText = data.recycling_week || 'N/A';
+
+            if (data.trash_day && data.recycling_week) {
+                const datesHTML = getNextRecyclingDates(data.trash_day, data.recycling_week);
+                document.getElementById('dates').innerHTML = datesHTML;
+            } else {
+                document.getElementById('dates').innerText = 'No schedule found';
+            }
+        }
+
+        function getNextRecyclingDates(dayName, weekType) {
+            const days = { 'SUNDAY': 0, 'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6 };
+            const targetDay = days[dayName.toUpperCase()];
+            if (targetDay === undefined) return 'N/A';
+
+            let results = [];
+            let today = new Date();
+            
+            // Reference: Norfolk usually operates on a Bi-Weekly schedule. 
+            // This logic assumes Dec 28 2025 as a start of a Week One cycle.
+            let referenceDate = new Date('2025-12-28'); 
+
+            for (let i = 0; i < 20; i++) {
+                let checkDate = new Date(referenceDate);
+                checkDate.setDate(referenceDate.getDate() + (i * 7) + targetDay);
+                
+                const isWeekOne = i % 2 === 0;
+                const currentWeekType = isWeekOne ? "WEEK ONE" : "WEEK TWO";
+                
+                if (currentWeekType === weekType.toUpperCase() && checkDate >= new Date().setHours(0,0,0,0)) {
+                    results.push(checkDate.toLocaleDateString('en-US', { 
+                        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                    }));
+                }
+                if (results.length >= 6) break;
+            }
+
+            return results.map((date, index) => 
+                `<div class="${index % 2 === 0 ? 'dateRow' : 'dateRowAlt'}">${date}</div>`
+            ).join('');
+        }
+    </script>
+</body>
+</html>
