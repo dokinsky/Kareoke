@@ -20,7 +20,7 @@
         }
 
         .site-header {
-            background-color: var(--norfolk-blue);
+            background-color: var(--bg-light);
             color: white;
             padding: 20px;
             text-align: center;
@@ -29,8 +29,8 @@
 
         .site-header h1 {
             margin: 0;
-            font-size: 1.4rem;
-            color: var(--norfolk-green);
+            font-size: 1.8rem;
+            color: var(--norfolk-blue);
         }
 
         .main-container {
@@ -60,7 +60,7 @@
 
         input {
             width: 100%;
-            padding: 14px; /* Larger touch target */
+            padding: 20px; /* Larger touch target */
             box-sizing: border-box;
             border: 2px solid #ddd;
             border-radius: 8px;
@@ -125,6 +125,24 @@
             padding: 10px; 
             font-size: 0.95rem;
         }
+        .loading-indicator {
+            color: var(--norfolk-blue);
+            font-style: italic;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+        }
+
+        /* Optional: Pulse animation for better visibility */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .loading-active {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
         .dateRow { background-color: #f1f1f1; }
         .dateRowAlt { background-color: #ffffff; }
 
@@ -153,6 +171,7 @@
         <section class="search-sidebar">
             <h2>Find Your Address</h2>
             <input type="text" id="addressInput" list="addressList" placeholder="Ex: 123 Main St">
+            <div id="loader" class="loading-indicator">Searching Norfolk database...</div>
             <datalist id="addressList"></datalist>
             <p style="font-size: 0.8rem; color: #666; margin-top: 12px;">
                 Type at least 3 characters to see suggestions.
@@ -209,11 +228,11 @@
                 "$where": `upper(full_address) like upper('%${val}%')`,
                 "$limit": "8"
             });
-
+            loader.classList.add('loading-active');
             try {
                 const response = await fetch(`${baseUrl}?${params.toString()}`);
                 const data = await response.json();
-                
+                loader.classList.remove('loading-active');
                 datalist.innerHTML = '';
                 data.forEach(item => {
                     const option = document.createElement('option');
@@ -227,6 +246,7 @@
 
             } catch (err) {
                 console.error("API Error:", err);
+                loader.classList.remove('loading-active');
             }
         });
 
