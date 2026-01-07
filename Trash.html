@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Norfolk Trash Schedule</title>
     <style>
-        /* Layout Setup */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
@@ -19,40 +18,35 @@
             padding: 15px 30px;
             display: flex;
             align-items: center;
+            text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
         }
-
         .site-header img {
-            height: 50px; /* Adjust based on your logo size */
+            height: 50px; 
             margin-right: 20px;
         }
-
         .site-header h1 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 600;
             letter-spacing: 0.5px;
             color: rgb(108, 155, 0);
         }
-        /* Left Panel: Search */
         .search-sidebar {
-            width: 350px;
+            width: 35%;
             padding: 20px;
             border-right: 1px solid #ddd;
             background-color: #f8f9fa;
             display: flex;
             flex-direction: column;
         }
-
-        /* Right Panel: Results */
         .details-panel {
-            flex: 1; /* Takes up remaining space */
+            flex: 1; 
             padding: 40px;
             background-color: white;
             overflow-y: auto;
         }
-
         input {
             width: 100%;
             padding: 12px;
@@ -61,32 +55,24 @@
             border-radius: 4px;
             font-size: 16px;
         }
-
         .card {
             border: 1px solid #e0e0e0;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-
         .placeholder-text {
             color: #888;
             text-align: center;
             margin-top: 100px;
         }
-
-        h2 { margin-top: 0; color: rgb(108, 155, 0); background-color: rgb(0, 54, 108); padding: 20px; }
+        h2 { margin-top: 0; color: rgb(108, 155, 0); background-color: rgb(0, 54, 108); padding: 20px; border-radius: 20px; font-size: 30px; }
         label { font-weight: bold;  margin-bottom: 5px; font-size: 0.9rem; }
         .data-row { margin-bottom: 15px; border-bottom: 1px solid #eee; }
-
-        .dateRow {
-            background-color: #eeeeee;
-        }
-        .dateRowAlt {
-            background-color: #fefefe;
-        }
+        .dateRow { background-color: #eeeeee; }
+        .dateRowAlt { background-color: #fefefe; }
         .main-container {
-            display: flex; /* Move your original body flex here */
+            display: flex; 
             flex: 1;
             overflow: hidden;
         }
@@ -171,7 +157,6 @@
             content.style.display = 'block';
 
             document.getElementById('displayAddress').innerText = data.full_address;
-            //document.getElementById('gpin').innerText = data.gpin || 'N/A';
             document.getElementById('trash').innerText = data.trash_day || 'N/A';
             document.getElementById('recycling').innerText = data.recycling_week || 'N/A';
 
@@ -191,7 +176,6 @@
             let results = [];
             let today = new Date();
             
-            // Reference: Dec 28, 2025 starts a "Week One" cycle for Norfolk 2026
             let startDate = new Date('2025/12/28'); 
             let referenceDate;
 
@@ -201,17 +185,10 @@
                 
             }
             const MS_PER_WEEK = 1000 * 60 * 60 * 24 * 7;
-            
-            // Look ahead up to 10 weeks to find the next 3 matching dates
             for (let i = 0; i < 20; i++) {
                 let checkDate = new Date(referenceDate);
                 checkDate.setDate(referenceDate.getDate() + (i * 7) + targetDay);
-                
-                // Determine if this specific week is Week One or Week Two
-                // Week 0 = Week One, Week 1 = Week Two, Week 2 = Week One...
                 const weekNum = i % 2 === 0 ? "WEEK ONE" : "WEEK TWO";
-
-                // If the week matches the data AND the date is today or in the future
                 if (weekNum === weekType.toUpperCase() && checkDate >= new Date(today.setHours(0,0,0,0))) {
                     results.push(checkDate.toLocaleDateString('en-US', { 
                         weekday: 'long', 
@@ -233,8 +210,6 @@
                 }
                 count++;
             })
-
-            //return results.length > 0 ? results.join(' | ') : 'No upcoming dates';
             return returnHTML;
         }
     </script>
