@@ -132,8 +132,6 @@
             margin-top: 10px;
             display: none; /* Hidden by default */
         }
-
-        /* Optional: Pulse animation for better visibility */
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -204,10 +202,13 @@
     </div>
 
     <script>
+        
         const input = document.getElementById('addressInput');
         const datalist = document.getElementById('addressList');
         const content = document.getElementById('content');
         const placeholder = document.getElementById('placeholder');
+        const loader = document.getElementById('loader');
+
         
         let searchCache = {};
 
@@ -241,7 +242,6 @@
                     searchCache[item.full_address] = item;
                 });
 
-                // If exact match found in typing
                 if (searchCache[val]) renderDetails(searchCache[val]);
 
             } catch (err) {
@@ -274,16 +274,15 @@
             let results = [];
             let today = new Date();
             
-            // Reference: Norfolk usually operates on a Bi-Weekly schedule. 
-            // This logic assumes Dec 28 2025 as a start of a Week One cycle.
             let referenceDate = new Date('2025-12-28'); 
 
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 30; i++) {
                 let checkDate = new Date(referenceDate);
-                checkDate.setDate(referenceDate.getDate() + (i * 7) + targetDay);
+                checkDate.setDate(referenceDate.getDate() + (i * 7) + targetDay + 1);
                 
                 const isWeekOne = i % 2 === 0;
                 const currentWeekType = isWeekOne ? "WEEK ONE" : "WEEK TWO";
+                
                 
                 if (currentWeekType === weekType.toUpperCase() && checkDate >= new Date().setHours(0,0,0,0)) {
                     results.push(checkDate.toLocaleDateString('en-US', { 
