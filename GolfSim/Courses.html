@@ -77,7 +77,13 @@
     </div>
 
     <div id="courseDetails">
-        <h1 id="courseName"></h1>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <h1 id="courseName" style="border: none;"></h1>
+            <button id="copyLinkBtn" style="padding: 10px; cursor: pointer; background: #004d40; color: white; border: none; border-radius: 4px;">
+                🔗 Copy Share Link
+            </button>
+        </div>
+    <p id="courseDescription" class="course-info"></p>
         <p id="courseDescription" class="course-info"></p>
 
         <div id="coreInfo">
@@ -207,13 +213,11 @@
     const courseSelector = document.getElementById('courseSelector');
     const teeBoxSelector = document.getElementById('teeBoxSelector');
     const courseDetailsDiv = document.getElementById('courseDetails');
-    let activeCourse = null; // Store the currently selected course object
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    let activeCourse = null;
 
-    // --- Main Logic Functions ---
+    // --- 1. Navigation & URL Logic ---
 
-    /**
-     * Populates the course selector dropdown.
-     */
     function populateCourseSelector() {
         courseData.forEach((course, index) => {
             const option = document.createElement('option');
@@ -225,98 +229,47 @@
         courseSelector.addEventListener('change', (event) => {
             const selectedIndex = event.target.value;
             if (selectedIndex !== "") {
-                activeCourse = courseData[selectedIndex];
-                displayCourseDetails(activeCourse);
-                populateTeeBoxSelector(activeCourse);
+                selectCourseByIndex(selectedIndex);
             }
         });
     }
 
-    /**
-     * Populates the Tee Box selector based on the Yardage data of the active course.
-     * @param {Object} course - The active golf course object.
-     */
-    function populateTeeBoxSelector(course) {
-        teeBoxSelector.innerHTML = ''; // Clear existing options
-        teeBoxSelector.disabled = false;
+    function selectCourseByIndex(index) {
+        activeCourse = courseData[index];
+        courseSelector.value = index;
+        displayCourseDetails(activeCourse);
+        populateTeeBoxSelector(activeCourse);
         
-        // Add a default prompt option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = "";
-        defaultOption.textContent = "--- Select a Tee Box ---";
-        defaultOption.disabled = true;
-        defaultOption.selected = true;
-        teeBoxSelector.appendChild(defaultOption);
+        // Update URL bar without reloading
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?course=' + encodeURIComponent(activeCourse.Name);
+        window.history.pushState({path:newUrl},'',newUrl);
+    }
 
-        course.Yardage.forEach(tee => {
-            const option = document.createElement('option');
-            option.value = tee.TeeRef; // e.g., 'tee_0'
-            option.textContent = tee.TeeName; // e.g., 'Red'
-            teeBoxSelector.appendChild(option);
-        });
+    copyLinkBtn.addEventListener('click', () => {
+        if (activeCourse) {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                const originalText = copyLinkBtn.textContent;
+                copyLinkBtn.textContent = "✅ Link Copied!";
+                setTimeout(() => copyLinkBtn.textContent = originalText, 2000);
+            });
+        }
+    });
 
-        // Clear and re-render hole data when a new tee box is selected
-        teeBoxSelector.onchange = () => {
-            if (activeCourse) {
-                renderHoleSummary(activeCourse, teeBoxSelector.value);
-            }
-        };
-
-        // Automatically select the first tee box if available
-        if (course.Yardage.length > 0) {
-            teeBoxSelector.value = course.Yardage[0].TeeRef;
-            renderHoleSummary(course, teeBoxSelector.value);
-        } else {
-            document.querySelector('#holeTable tbody').innerHTML = '<tr><td colspan="4">No hole data available for this course.</td></tr>';
+    function checkURLParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseNameQuery = urlParams.get('course');
+        if (courseNameQuery) {
+            const courseIndex = courseData.findIndex(
+                c => c.Name.toLowerCase() === courseNameQuery.toLowerCase()
+            );
+            if (courseIndex !== -1) selectCourseByIndex(courseIndex);
         }
     }
 
-    /**
-     * Renders the hole-by-hole summary table for the selected tee.
-     * @param {Object} course - The active golf course object.
-     * @param {string} teeRef - The TeeRef value (e.g., 'tee_0') to filter by.
-     */
-    function renderHoleSummary(course, teeRef) {
-        const holeTableBody = document.querySelector('#holeTable tbody');
-        holeTableBody.innerHTML = ''; // Clear previous data
-        
-        // Filter out non-hole areas (like Driving Range, Putting Green, etc.)
-        const holes = course.Areas.filter(area => area.AreaType === "Hole");
-        
-        if (holes.length === 0) {
-            holeTableBody.innerHTML = '<tr><td colspan="4">No hole data available for this course.</td></tr>';
-            return;
-        }
+    // --- 2. Data Rendering Functions (The ones you already had) ---
 
-        holes.sort((a,b) => a.HoleNo - b.HoleNo);
-
-        holes.forEach(hole => {
-            // Find the specific tee data for the current hole
-            const teeData = hole.Tees.find(tee => tee.TeeRef === teeRef); 
-            
-            const row = holeTableBody.insertRow();
-            row.insertCell().textContent = hole.HoleNo;
-            
-            if (teeData) {
-                row.insertCell().textContent = teeData.Par;
-                row.insertCell().textContent = teeData.StrokeIndex;
-                row.insertCell().textContent = teeData.Distance.toLocaleString();
-            } else {
-                row.insertCell().textContent = 'N/A';
-                row.insertCell().textContent = 'N/A';
-                row.insertCell().textContent = 'N/A';
-            }
-        });
-    }
-
-    /**
-     * Renders the static core details and the Yardage/Rating table.
-     * @param {Object} course - The golf course object to display.
-     */
     function displayCourseDetails(course) {
         courseDetailsDiv.style.display = 'block'; 
-
-        // --- Core Info Mapping ---
         document.getElementById('courseName').textContent = course.Name;
         document.getElementById('courseDescription').textContent = course.Description;
         document.getElementById('parValue').textContent = course.Par;
@@ -324,7 +277,6 @@
         document.getElementById('establishedDate').textContent = course.EstablishedDate;
         document.getElementById("altitudeValue").textContent = course.Altitude;
 
-        
         const stateParts = course.State.split(',');
         const stateName = stateParts.length > 0 ? stateParts[0].trim() : course.State;
         document.getElementById('cityStateCountry').textContent = `${course.City}, ${stateName}, ${course.Country}`;
@@ -332,24 +284,74 @@
         document.getElementById('latitudeValue').textContent = course.Latitude;
         document.getElementById('longitudeValue').textContent = course.Longitude;
 
-        // --- Tee Yardage Table (All Tees) ---
         const yardageTableBody = document.querySelector('#yardageTable tbody');
-        yardageTableBody.innerHTML = ''; // Clear previous data
-
+        yardageTableBody.innerHTML = '';
         course.Yardage.forEach(tee => {
             const row = yardageTableBody.insertRow();
             row.insertCell().textContent = tee.TeeName;
-            //row.insertCell().textContent = tee.TeeRef.replace('tee_', '');
             row.insertCell().textContent = tee.Yardage.toLocaleString();
             row.insertCell().textContent = tee.Rating;
             row.insertCell().textContent = tee.Slope;
         });
     }
 
-    // --- Initialization ---
-    // Hide details initially
+    function populateTeeBoxSelector(course) {
+        teeBoxSelector.innerHTML = '';
+        teeBoxSelector.disabled = false;
+        
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "--- Select a Tee Box ---";
+        defaultOption.disabled = true;
+        teeBoxSelector.appendChild(defaultOption);
+
+        course.Yardage.forEach(tee => {
+            const option = document.createElement('option');
+            option.value = tee.TeeRef;
+            option.textContent = tee.TeeName;
+            teeBoxSelector.appendChild(option);
+        });
+
+        teeBoxSelector.onchange = () => {
+            if (activeCourse) renderHoleSummary(activeCourse, teeBoxSelector.value);
+        };
+
+        if (course.Yardage.length > 0) {
+            teeBoxSelector.value = course.Yardage[0].TeeRef;
+            renderHoleSummary(course, teeBoxSelector.value);
+        }
+    }
+
+    function renderHoleSummary(course, teeRef) {
+        const holeTableBody = document.querySelector('#holeTable tbody');
+        holeTableBody.innerHTML = '';
+        const holes = course.Areas.filter(area => area.AreaType === "Hole");
+        
+        if (holes.length === 0) {
+            holeTableBody.innerHTML = '<tr><td colspan="4">No hole data available.</td></tr>';
+            return;
+        }
+
+        holes.sort((a,b) => a.HoleNo - b.HoleNo).forEach(hole => {
+            const teeData = hole.Tees.find(tee => tee.TeeRef === teeRef); 
+            const row = holeTableBody.insertRow();
+            row.insertCell().textContent = hole.HoleNo;
+            if (teeData) {
+                row.insertCell().textContent = teeData.Par;
+                row.insertCell().textContent = teeData.StrokeIndex;
+                row.insertCell().textContent = teeData.Distance.toLocaleString();
+            } else {
+                row.insertCell().innerHTML = '<em>N/A</em>';
+                row.insertCell().innerHTML = '<em>N/A</em>';
+                row.insertCell().innerHTML = '<em>N/A</em>';
+            }
+        });
+    }
+
+    // --- 3. Initialization ---
     courseDetailsDiv.style.display = 'none';
     populateCourseSelector();
+    checkURLParameters();
 </script>
 
 </body>
