@@ -211,11 +211,9 @@
 
         
         let searchCache = {};
+        let debounceTimer;
 
-        input.addEventListener('input', async (e) => {
-            const val = e.target.value.trim();
-            
-            // Check cache first
+        async function performSearch(val){
             if (searchCache[val]) {
                 renderDetails(searchCache[val]);
                 return;
@@ -248,6 +246,17 @@
                 console.error("API Error:", err);
                 loader.classList.remove('loading-active');
             }
+        }
+
+        input.addEventListener('input', async (e) => {
+            const val = e.target.value.trim();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (val) {
+                    performSearch(val);
+                }
+            }, 500); 
+                
         });
 
         function renderDetails(data) {
