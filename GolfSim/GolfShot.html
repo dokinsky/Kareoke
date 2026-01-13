@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Golf Shot - Filtered View</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
+        
+        #overlay {
+            position: absolute; top: 20px; left: 20px; color: white;
+            background: rgba(0,0,0,0.85); padding: 20px; border-radius: 10px;
+            border-left: 5px solid #4CAF50; min-width: 200px; z-index: 10;
+        }
+
+        #legend {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0, 0, 0, 0.8); color: white;
+            padding: 15px; border-radius: 8px;
+            border-right: 5px solid #4CAF50; min-width: 120px; z-index: 10;
+        }
+
+        select { 
+            width: 100%; padding: 8px; margin-top: 10px; 
+            background: #222; color: white; border: 1px solid #444; border-radius: 4px;
+        }
+
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; font-weight: bold; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
+        h3 { margin: 0; font-size: 0.9rem; color: #aaa; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <h3>Shot Filter</h3>
+    <select id="hole-filter">
+        <option value="all">All Holes</option>
+        <option value="1">Hole 1</option>
+        <option value="2">Hole 2</option>
+        <option value="3">Hole 3</option>
+        <option value="4">Hole 4</option>
+        <option value="5">Hole 5</option>
+        <option value="6">Hole 6</option>
+        <option value="7">Hole 7</option>
+        <option value="8">Hole 8</option>
+        <option value="9">Hole 9</option>
+        <option value="10">Hole 10</option>
+        <option value="11">Hole 11</option>
+        <option value="12">Hole 12</option>
+        <option value="13">Hole 13</option>
+        <option value="14">Hole 14</option>
+        <option value="15">Hole 15</option>
+        <option value="16">Hole 16</option>
+        <option value="17">Hole 17</option>
+        <option value="18">Hole 18</option>
+    </select>
+</div>
+
+<div id="legend">
+    <h3>Players</h3>
+    <div id="legend-content"></div>
+</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script src="data.js"></script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Check if data loaded from data.js
+    const shotDataArray = window.shotDataArray || [];
+    if (shotDataArray.length === 0) {
+        console.error("Data not found! Make sure data.js defines window.shotDataArray");
+    }
+
+    // --- SCENE SETUP ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+    // --- GLOBALS & HELPERS ---
+    const palette = [0x00FF00, 0x00AAFF, 0xFF5500, 0xFFFF00, 0xFF00FF, 0x00FFFF];
+    const nameToColorMap = {};
+    let colorIndex = 0;
+    let activeShotObjects = [];
+
+    function getColorForName(name) {
+        if (!nameToColorMap[name]) {
+            nameToColorMap[name] = palette[colorIndex % palette.length];
+            colorIndex++;
+        }
+        return nameToColorMap[name];
+    }
+
+    function createShot(shotData) {
+        const shotColor = getColorForName(shotData.Name);
+        const points = shotData.Shot.Trajectory.map(p => new THREE.Vector3(p.X, p.Y, p.Z));
+
+        // Line
+        const curve = new THREE.CatmullRomCurve3(points);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(100));
+        const lineMat = new THREE.LineBasicMaterial({ color: shotColor, transparent: true, opacity: 0.8 });
+        const line = new THREE.Line(lineGeo, lineMat);
+        scene.add(line);
+
+        // Ball
+        const ball = new THREE.Mesh(
+            new THREE.SphereGeometry(1.0),
+            new THREE.MeshPhongMaterial({ color: shotColor, emissive: shotColor, emissiveIntensity: 0.3 })
+        );
+        ball.position.copy(points[points.length - 1]);
+        scene.add(ball);
+
+        return { line, ball };
+    }
+
+    function updateLegend() {
+        const content = document.getElementById('legend-content');
+        content.innerHTML = '';
+        for (const [name, color] of Object.entries(nameToColorMap)) {
+            const hexColor = `#${color.toString(16).padStart(6, '0')}`;
+            content.innerHTML += `
+                <div class="legend-item">
+                    <div class="color-dot" style="background-color: ${hexColor}"></div>
+                    <span>${name}</span>
+                </div>`;
+        }
+    }
+    function moveCameraToShots(filteredData) {
+        if (filteredData.length === 0) return;
+
+        // 1. Calculate the average position (Center of Gravity) of all landing spots
+        let avgX = 0, avgY = 0, avgZ = 0;
+        
+        filteredData.forEach(s => {
+            avgX += s.Shot.ToPos.X;
+            avgY += s.Shot.ToPos.Y;
+            avgZ += s.Shot.ToPos.Z;
+        });
+
+        avgX /= filteredData.length;
+        avgY /= filteredData.length;
+        avgZ /= filteredData.length;
+
+        // 2. Update the OrbitControls target (where we rotate around)
+        // We use a slight offset so the camera isn't inside the ground
+        controls.target.set(avgX, avgY, avgZ);
+
+        // 3. Move the camera to a "Bird's Eye" position relative to the new target
+        // Adjust these numbers to change how far/high the camera sits
+        camera.position.set(avgX, avgY + 150, avgZ - 200);
+
+        // 4. Important: tell the controls we changed things manually
+        controls.update();
+    }
+
+    function filterShotsByHole(holeNum) {
+        // Clear existing
+        activeShotObjects.forEach(obj => {
+            scene.remove(obj.line);
+            scene.remove(obj.ball);
+            obj.line.geometry.dispose();
+            obj.line.material.dispose();
+            obj.ball.geometry.dispose();
+            obj.ball.material.dispose();
+        });
+        activeShotObjects = [];
+
+        // Add filtered
+        const filtered = holeNum === 'all' ? shotDataArray : shotDataArray.filter(s => s.Hole == holeNum);
+        filtered.forEach(shot => {
+            activeShotObjects.push(createShot(shot));
+        });
+        updateLegend();
+        moveCameraToShots(filtered);
+    }
+
+    // --- INITIALIZATION ---
+    if (shotDataArray.length > 0) {
+        // Initialize with Hole 1 or "all"
+        filterShotsByHole('all');
+
+        // Setup Camera based on first shot
+        const first = shotDataArray[0].Shot;
+        camera.position.set(first.FromPos.X, first.FromPos.Y + 100, first.FromPos.Z - 200);
+        controls.target.set(first.ToPos.X, first.ToPos.Y, first.ToPos.Z);
+        
+        // Add Pin for the first shot (or you can move this into filterShotsByHole)
+        const pin = first.PinPlacement;
+        const pinMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 15), new THREE.MeshBasicMaterial({color: 0xffffff}));
+        pinMesh.position.set(pin.X, pin.Y + 7.5, pin.Z);
+        scene.add(pinMesh);
+        
+        // Add Grid
+        const grid = new THREE.GridHelper(5000, 100, 0x222222, 0x111111);
+        grid.position.y = first.ToPos.Y;
+        scene.add(grid);
+    }
+
+    // Event Listener for Dropdown
+    document.getElementById('hole-filter').addEventListener('change', (e) => {
+        filterShotsByHole(e.target.value);
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
