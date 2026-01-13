@@ -107,27 +107,60 @@
         }
         return nameToColorMap[name];
     }
+    function createPin(pinData) {
+        const pinGroup = new THREE.Group();
+        
+        // The Flagpole
+        const pole = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2, 0.2, 15), 
+            new THREE.MeshBasicMaterial({color: 0xffffff})
+        );
+        
+        // Optional: Add a small red flag so it looks like a golf pin
+        const flag = new THREE.Mesh(
+            new THREE.PlaneGeometry(3, 2),
+            new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide})
+        );
+        flag.position.set(1.5, 6, 0);
+        
+        pinGroup.add(pole, flag);
+        pinGroup.position.set(pinData.X, pinData.Y + 7.5, pinData.Z);
+        
+        scene.add(pinGroup);
+        return pinGroup;
+    }
 
     function createShot(shotData) {
         const shotColor = getColorForName(shotData.Name);
         const points = shotData.Shot.Trajectory.map(p => new THREE.Vector3(p.X, p.Y, p.Z));
+        
+        // Create the "Data End" Indicator (The ring)
+        const dataEndPoint = points[points.length - 1].clone();
+        const ringGeo = new THREE.TorusGeometry(1.2, 0.1, 8, 24);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); 
+        const endIndicator = new THREE.Mesh(ringGeo, ringMat);
+        
+        endIndicator.position.copy(dataEndPoint);
+        endIndicator.rotation.x = Math.PI / 2;
+        scene.add(endIndicator);
 
-        // Line
+        // Add ToPos and Create Line/Ball
+        const finalPos = new THREE.Vector3(shotData.Shot.ToPos.X, shotData.Shot.ToPos.Y, shotData.Shot.ToPos.Z);
+        points.push(finalPos);
+
         const curve = new THREE.CatmullRomCurve3(points);
-        const lineGeo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(100));
-        const lineMat = new THREE.LineBasicMaterial({ color: shotColor, transparent: true, opacity: 0.8 });
-        const line = new THREE.Line(lineGeo, lineMat);
+        const line = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(curve.getPoints(100)),
+            new THREE.LineBasicMaterial({ color: shotColor, transparent: true, opacity: 0.8 })
+        );
         scene.add(line);
 
-        // Ball
-        const ball = new THREE.Mesh(
-            new THREE.SphereGeometry(1.0),
-            new THREE.MeshPhongMaterial({ color: shotColor, emissive: shotColor, emissiveIntensity: 0.3 })
-        );
-        ball.position.copy(points[points.length - 1]);
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(1.0), new THREE.MeshPhongMaterial({ color: shotColor }));
+        ball.position.copy(finalPos);
         scene.add(ball);
 
-        return { line, ball };
+        // RETURN ALL THREE so the filter can find them
+        return { line, ball, endIndicator };
     }
 
     function updateLegend() {
@@ -169,26 +202,58 @@
         // 4. Important: tell the controls we changed things manually
         controls.update();
     }
-
-    function filterShotsByHole(holeNum) {
-        // Clear existing
+    function clearScene() {
         activeShotObjects.forEach(obj => {
+            // Remove from 3D Scene
             scene.remove(obj.line);
             scene.remove(obj.ball);
+            scene.remove(obj.endIndicator); // Clean up the ring!
+            if (obj.pin) scene.remove(obj.pin);
+
+            // Dispose of Geometry/Materials to free up GPU memory
             obj.line.geometry.dispose();
             obj.line.material.dispose();
             obj.ball.geometry.dispose();
             obj.ball.material.dispose();
+            
+            if (obj.endIndicator) {
+                obj.endIndicator.geometry.dispose();
+                obj.endIndicator.material.dispose();
+            }
         });
+    
+        // Reset the tracking array
         activeShotObjects = [];
+    }
 
-        // Add filtered
-        const filtered = holeNum === 'all' ? shotDataArray : shotDataArray.filter(s => s.Hole == holeNum);
-        filtered.forEach(shot => {
-            activeShotObjects.push(createShot(shot));
+    function filterShotsByHole(holeNum) {
+        clearScene(); 
+
+        const filteredData = (holeNum === 'all') 
+            ? shotDataArray 
+            : shotDataArray.filter(s => s.Hole == holeNum);
+
+        // Track unique pins so we don't duplicate them
+        const renderedPins = new Set();
+
+        filteredData.forEach(shot => {
+            // Render the shot
+            const shotGroup = createShot(shot);
+            
+            // Render the pin if we haven't drawn it yet for this coordinate
+            const pinKey = `${shot.Shot.PinPlacement.X}_${shot.Shot.PinPlacement.Z}`;
+            if (!renderedPins.has(pinKey)) {
+                const pinMesh = createPin(shot.Shot.PinPlacement);
+                // Store it in activeShotObjects so clearScene() removes it!
+                shotGroup.pin = pinMesh; 
+                renderedPins.add(pinKey);
+            }
+
+            activeShotObjects.push(shotGroup);
         });
+
         updateLegend();
-        moveCameraToShots(filtered);
+        moveCameraToShots(filteredData);
     }
 
     // --- INITIALIZATION ---
